@@ -1,3 +1,4 @@
+import platform
 import keyboard  # 用于全局热键
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, 
                              QLabel, QSlider, QPushButton, QColorDialog, QGroupBox, QFrame)
@@ -14,8 +15,17 @@ class ControlPanel(QWidget):
         self.trail_widget = trail_widget
         self.init_ui()
         
-        # 注册全局显示/隐藏快捷键 Ctrl+O
-        keyboard.add_hotkey('ctrl+o', self.toggle_visibility)
+        # 注册全局显示/隐藏快捷键（跨平台兼容）
+        # Windows/Linux: Ctrl+O, Mac: Cmd+O
+        if platform.system() == 'Darwin':  # macOS
+            hotkey = 'cmd+o'
+        else:
+            hotkey = 'ctrl+o'
+        try:
+            keyboard.add_hotkey(hotkey, self.toggle_visibility)
+        except Exception as e:
+            print(f"警告：无法注册全局快捷键: {e}")
+            print("提示：在Mac上可能需要授予辅助功能权限")
     
     def init_ui(self):
         self.setWindowTitle("轨迹精灵 - TrailSprite")
@@ -217,7 +227,12 @@ class ControlPanel(QWidget):
         shortcut_title = QLabel("⌨️ 快捷键")
         shortcut_title.setStyleSheet("font-size: 12px; font-weight: bold; color: #3498DB;")
         shortcut_layout.addWidget(shortcut_title)
-        shortcut_info = QLabel("Ctrl+O: 显示/隐藏面板  |  Ctrl+P: 退出程序")
+        # 根据操作系统显示不同的快捷键提示
+        if platform.system() == 'Darwin':  # macOS
+            shortcut_text = "⌘+O: 显示/隐藏面板  |  ⌘+P: 退出程序"
+        else:
+            shortcut_text = "Ctrl+O: 显示/隐藏面板  |  Ctrl+P: 退出程序"
+        shortcut_info = QLabel(shortcut_text)
         shortcut_info.setStyleSheet("font-size: 10px; color: #95A5A6;")
         shortcut_layout.addWidget(shortcut_info)
         shortcut_frame.setLayout(shortcut_layout)

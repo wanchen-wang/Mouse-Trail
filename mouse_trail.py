@@ -1,4 +1,6 @@
-import ctypes # 用于 DPI 感知设置
+import sys
+import platform
+import ctypes # 用于 DPI 感知设置（仅Windows）
 import keyboard  # 用于全局热键
 from PyQt6.QtWidgets import QWidget # 基本窗口类
 from PyQt6.QtCore import Qt, QTimer, QPoint # 基本 Qt 常量和计时器
@@ -9,11 +11,15 @@ from PyQt6.QtWidgets import QApplication
 import math # 用于计算星形顶点        
 import random
 
-# DPI 感知设置，确保高分屏坐标精准
-try:
-    ctypes.windll.shcore.SetProcessDpiAwareness(1)# 系统DPI感知
-except Exception:
-    ctypes.windll.user32.SetProcessDPIAware()# 系统DPI感知
+# DPI 感知设置，确保高分屏坐标精准（仅Windows）
+if platform.system() == 'Windows':
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(1)  # 系统DPI感知
+    except Exception:
+        try:
+            ctypes.windll.user32.SetProcessDPIAware()  # 系统DPI感知（旧版Windows）
+        except Exception:
+            pass
 
 class MouseTrail(QWidget):
     def __init__(self, control_panel=None):
@@ -41,8 +47,17 @@ class MouseTrail(QWidget):
         self.timer.timeout.connect(self.update_trail)
         self.timer.start(10) 
 
-        # 注册全局退出快捷键 Ctrl+P
-        keyboard.add_hotkey('ctrl+p', self.close_app)
+        # 注册全局退出快捷键（跨平台兼容）
+        # Windows/Linux: Ctrl+P, Mac: Cmd+P
+        if platform.system() == 'Darwin':  # macOS
+            hotkey = 'cmd+p'
+        else:
+            hotkey = 'ctrl+p'
+        try:
+            keyboard.add_hotkey(hotkey, self.close_app)
+        except Exception as e:
+            print(f"警告：无法注册全局快捷键: {e}")
+            print("提示：在Mac上可能需要授予辅助功能权限")
     
     def update_settings(self, initial_alpha, start_color, end_color):
         """更新设置参数"""
