@@ -1,5 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 from PyInstaller.utils.hooks import collect_all
+import platform
 
 # 收集所有必要的依赖
 datas = []
@@ -23,25 +24,14 @@ for module in pyqt6_modules:
     except:
         pass
 
-# 添加隐藏导入（根据平台）
-import platform
-hiddenimports = [
+# 添加隐藏导入（Mac版本，移除Windows特定的）
+hiddenimports += [
     'mouse_trail',
     'control_panel',
     'keyboard',
     'keyboard._nixcommon',
+    'keyboard._darwinmouse',  # Mac特定的
 ]
-
-# 平台特定的导入
-if platform.system() == 'Windows':
-    hiddenimports.extend([
-        'keyboard._winkeyboard',
-        'keyboard._winmouse',
-    ])
-elif platform.system() == 'Darwin':  # macOS
-    hiddenimports.extend([
-        'keyboard._darwinmouse',
-    ])
 
 a = Analysis(
     ['main.py'],
@@ -53,14 +43,13 @@ a = Analysis(
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
     cipher=None,
     noarchive=False,
 )
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=None)
 
+# 创建可执行文件
 exe = EXE(
     pyz,
     a.scripts,
@@ -72,14 +61,31 @@ exe = EXE(
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
-    upx=True,
+    upx=False,  # Mac上通常不使用UPX
     upx_exclude=[],
     runtime_tmpdir=None,
-    console=False,  # 无控制台窗口
+    console=False,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon=None,  # 如果有图标文件可以在这里指定路径，例如: icon='icon.ico'
+)
+
+# Mac上创建.app bundle
+app = BUNDLE(
+    exe,
+    name='轨迹精灵.app',
+    icon=None,
+    bundle_identifier='com.trailsprite.app',
+    version='1.0.0',
+    info_plist={
+        'NSPrincipalClass': 'NSApplication',
+        'NSHighResolutionCapable': 'True',
+        'NSRequiresAquaSystemAppearance': 'False',
+        'LSMinimumSystemVersion': '10.13',
+        'NSHumanReadableCopyright': 'Copyright © 2024',
+        'CFBundleShortVersionString': '1.0.0',
+        'CFBundleVersion': '1.0.0',
+    },
 )
