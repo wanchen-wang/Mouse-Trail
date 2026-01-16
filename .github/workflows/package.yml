@@ -2,15 +2,19 @@ name: 跨平台自动打包下载
 
 on:
   release:
-    types: [published] # 当你在 GitHub 发布 Release 时触发
+    types: [published]
+
+# 【新增】开启权限，允许机器人上传文件到 Release
+permissions:
+  contents: write
 
 jobs:
   build-macos:
-    runs-on: macos-latest # 使用 GitHub 提供的最新 Mac 服务器
+    runs-on: macos-latest
     
     steps:
     - name: 检出代码
-      uses: actions/checkout@v3 # 将你的代码下载到云端服务器
+      uses: actions/checkout@v3
 
     - name: 设置 Python 环境
       uses: actions/setup-python@v4
@@ -19,15 +23,21 @@ jobs:
 
     - name: 安装依赖库
       run: |
-        pip install pyinstaller PyQt6 # 安装打包所需的库
+        pip install pyinstaller PyQt6
 
     - name: 执行 Mac 打包指令
       run: |
+        # 注意：这里打包后会生成 dist/MouseTrail_Mac.app 文件夹
         pyinstaller --noconsole --onefile --windowed --name "MouseTrail_Mac" main.py
+
+    - name: 【修正】将 App 文件夹压缩为 ZIP
+      run: |
+        cd dist
+        zip -r MouseTrail_Mac.app.zip MouseTrail_Mac.app
 
     - name: 上传产物到 Release
       uses: softprops/action-gh-release@v1
       with:
-        files: dist/MouseTrail_Mac.app.zip # 将打包好的文件挂载到你的 Release 页面
+        files: dist/MouseTrail_Mac.app.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
