@@ -4,7 +4,7 @@
 !仅限windos系统使用
 
 ### 🚀 快速开始
-* **[点击下载 exe 执行文件][Κυρία, μπορείτε να το κατεβάσετε από αυτόν τον σύνδεσμο.][https://github.com/wanchen-wang/Mouse-Trail/releases/tag/v1.1]**
+* **[点击下载 exe 执行文件][Κυρία, μπορείτε να το κατεβάσετε από αυτόν τον σύνδεσμο.][https://github.com/wanchen-wang/Mouse-Trail/releases/tag/v1.2]**
 * **退出方式**：按下键盘 `Ctrl + P` 
 
 ### 📺 效果演示
