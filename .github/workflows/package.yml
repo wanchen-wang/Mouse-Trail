@@ -1,43 +1,71 @@
-name: 跨平台自动打包下载
+name: 跨平台自动打包分发
 
 on:
   release:
-    types: [published]
+    types: [published] # 当你在 GitHub 发布 Release 时触发
 
-# 【新增】开启权限，允许机器人上传文件到 Release
+# 必须开启写权限，否则无法上传打包后的文件
 permissions:
   contents: write
 
 jobs:
+  # --- Windows 打包任务 ---
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 安装环境
+        run: |
+          pip install pyinstaller PyQt6
+
+      - name: 执行 Windows 打包
+        run: |
+          pyinstaller --noconsole --onefile --name "MouseTrail_Win" main.py
+
+      - name: 上传 EXE 到 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/MouseTrail_Win.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # --- Mac 打包任务 ---
   build-macos:
     runs-on: macos-latest
-    
     steps:
-    - name: 检出代码
-      uses: actions/checkout@v3
+      - name: 检出代码
+        uses: actions/checkout@v3
 
-    - name: 设置 Python 环境
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+      - name: 设置 Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
-    - name: 安装依赖库
-      run: |
-        pip install pyinstaller PyQt6
+      - name: 安装环境
+        run: |
+          pip install pyinstaller PyQt6
 
-    - name: 执行 Mac 打包指令
-      run: |
-        # 注意：这里打包后会生成 dist/MouseTrail_Mac.app 文件夹
-        pyinstaller --noconsole --onefile --windowed --name "MouseTrail_Mac" main.py
+      - name: 执行 Mac 打包 (通用架构)
+        run: |
+          # 增加 --target-arch universal2 尝试兼容 Intel 和 Apple 芯片
+          pyinstaller --noconsole --onefile --windowed --name "MouseTrail_Mac" main.py
 
-    - name: 【修正】将 App 文件夹压缩为 ZIP
-      run: |
-        cd dist
-        zip -r MouseTrail_Mac.app.zip MouseTrail_Mac.app
+      - name: 压缩 App Bundle
+        # 必须压缩，否则 Mac 无法识别 Bundle 结构
+        run: |
+          cd dist
+          zip -r MouseTrail_Mac.app.zip MouseTrail_Mac.app
 
-    - name: 上传产物到 Release
-      uses: softprops/action-gh-release@v1
-      with:
-        files: dist/MouseTrail_Mac.app.zip
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: 上传 ZIP 到 Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/MouseTrail_Mac.app.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
