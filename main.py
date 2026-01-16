@@ -3,6 +3,7 @@ from PyQt6.QtWidgets import QApplication
 from mouse_trail import MouseTrail
 from control_panel import ControlPanel
 
+#write by wangwanchen
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
